@@ -36,6 +36,9 @@ jobs:
       run: |
         gcloud config set project $PROJECT_ID
         
+        # 啟用必要的 API
+        gcloud services enable run.googleapis.com cloudbuild.googleapis.com vision.googleapis.com serviceusage.googleapis.com
+        
         # 使用原始碼部署，免 Dockerfile 和 Artifact Registry
         gcloud run deploy $SERVICE \
           --source . \
