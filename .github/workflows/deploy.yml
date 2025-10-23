@@ -68,7 +68,7 @@ jobs:
           --min-instances=1 \
           --max-instances=3 \
           --memory=1Gi \
-          --build-env-vars=GOOGLE_NODE_VERSION=18 \
+          --set-build-env-vars=GOOGLE_NODE_VERSION=18 \
           --set-env-vars=EINV_BASE_URL=https://www.einvoice.nat.gov.tw/portal/ods/ODS318E/einvoice_open_data
 
     - name: Get Service URL
