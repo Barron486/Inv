@@ -32,6 +32,10 @@ jobs:
     - name: Configure Docker
       run: gcloud auth configure-docker
 
+    - name: Force Buildpacks (ignore Dockerfile)
+      run: |
+        if [ -f Dockerfile ]; then mv Dockerfile Dockerfile.ci.bak; fi
+
     - name: Build and Deploy
       run: |
         gcloud config set project $PROJECT_ID
