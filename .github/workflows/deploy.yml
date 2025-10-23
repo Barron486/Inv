@@ -62,9 +62,22 @@ jobs:
           --min-instances=1 \
           --max-instances=3 \
           --memory=1Gi \
+          --build-env-vars=GOOGLE_NODE_VERSION=18 \
           --set-env-vars=EINV_BASE_URL=https://www.einvoice.nat.gov.tw/portal/ods/ODS318E/einvoice_open_data
 
     - name: Get Service URL
       run: |
         echo "Service URL:"
         gcloud run services describe $SERVICE --region=$REGION --format='value(status.url)'
+
+    - name: Print Cloud Build Logs on Failure
+      if: failure()
+      run: |
+        echo "Fetching latest Cloud Build logs..."
+        BUILD_ID=$(gcloud builds list --limit=1 --format='value(ID)')
+        echo "Last BUILD_ID: ${BUILD_ID}"
+        if [ -n "$BUILD_ID" ]; then
+          gcloud builds log $BUILD_ID || true
+        else
+          echo "No build logs found."
+        fi
