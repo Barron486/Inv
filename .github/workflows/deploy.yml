@@ -34,9 +34,15 @@ jobs:
 
     - name: Force Buildpacks (ignore Dockerfile)
       run: |
-        if [ -f Dockerfile ]; then mv Dockerfile Dockerfile.ci.bak; fi
-        echo "Listing root after potential rename:"
+        pwd
+        echo "Before rename:"
         ls -la
+        if [ -f Dockerfile ]; then 
+          mv Dockerfile Dockerfile.ci.bak
+          echo "Dockerfile renamed to Dockerfile.ci.bak"
+        fi
+        echo "After rename:"
+        ls -la | grep -i docker || echo "No Dockerfile found"
 
     - name: Build and Deploy
       run: |
