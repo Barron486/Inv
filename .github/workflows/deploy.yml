@@ -35,6 +35,8 @@ jobs:
     - name: Force Buildpacks (ignore Dockerfile)
       run: |
         if [ -f Dockerfile ]; then mv Dockerfile Dockerfile.ci.bak; fi
+        echo "Listing root after potential rename:"
+        ls -la
 
     - name: Build and Deploy
       run: |
@@ -47,7 +49,8 @@ jobs:
         # 取得服務帳戶（執行與建置）
         PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
         SA_COMPUTE="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-        SA_BUILD="cloud-build-exec@${PROJECT_ID}.iam.gserviceaccount.com"
+        # 使用 Compute Default 同時擔任建置與執行 SA，避免尚未建立的 Cloud Build SA 問題
+        SA_BUILD="$SA_COMPUTE"
         
         # 使用原始碼部署，免 Dockerfile 和 Artifact Registry
         gcloud run deploy $SERVICE \
