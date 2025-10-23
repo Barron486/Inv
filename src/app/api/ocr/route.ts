@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const buffers: { name: string; bytes: Buffer }[] = [];
     for (const f of files) {
       const arrayBuffer = await f.arrayBuffer();
-      let bytes = Buffer.from(arrayBuffer);
+         let bytes = Buffer.from(new Uint8Array(arrayBuffer));
       if (autoCrop || enhance) {
         bytes = await autoCropAndEnhance(bytes, { autoCrop, sharpen: enhance, normalize: enhance, threshold: true, output: 'png' });
       }
