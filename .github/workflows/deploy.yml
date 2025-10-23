@@ -32,17 +32,15 @@ jobs:
     - name: Configure Docker
       run: gcloud auth configure-docker
 
-    - name: Force Buildpacks (ignore Dockerfile)
+    - name: Force Buildpacks (remove Dockerfile)
       run: |
         pwd
-        echo "Before rename:"
-        ls -la
-        if [ -f Dockerfile ]; then 
-          mv Dockerfile Dockerfile.ci.bak
-          echo "Dockerfile renamed to Dockerfile.ci.bak"
-        fi
-        echo "After rename:"
+        echo "Before removal:"
         ls -la | grep -i docker || echo "No Dockerfile found"
+        # 完全移除 Dockerfile 以強制使用 Buildpacks
+        rm -f Dockerfile Dockerfile.ci.bak Dockerfile.bak
+        echo "After removal:"
+        ls -la | grep -i docker || echo "Dockerfile successfully removed"
 
     - name: Build and Deploy
       run: |
