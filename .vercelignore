@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+.github
+invoice-app.zip
+Dockerfile*
+.gcloudignore
+

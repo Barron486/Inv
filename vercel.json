@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "EINV_BASE_URL": "https://www.einvoice.nat.gov.tw/portal/ods/ODS318E/einvoice_open_data"
+  }
+}
+
