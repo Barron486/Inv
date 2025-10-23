@@ -35,12 +35,22 @@ export async function POST(req: NextRequest) {
           return { fileName: b.name, amount: null, error: String(err) };
         }
       })
-    );
-
-    return NextResponse.json({ results });
-  } catch (err: any) {
+      if (output === 'jpeg') {
+    const buffer = await img.jpeg({ quality: 90 }).toBuffer();
+    return Buffer.from(buffer);
+  }
+  const buffer = await img.png({ compressionLevel: 9 }).toBuffer();
+  return Buffer.from(buffer);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
+export async function manualCrop(input: Buffer, region: { left: number; top: number; width: number; height: number }, output: 'png' | 'jpeg' = 'png'): Promise<Buffer> {
+  const img = sharp(input, { failOn: false }).rotate().extract(region);
+  if (output === 'jpeg') {
+    const buffer = await img.jpeg({ quality: 92 }).toBuffer();
+    return Buffer.from(buffer);
+  }
+  const buffer = await img.png({ compressionLevel: 9 }).toBuffer();
+  return Buffer.from(buffer);
 }
 
 
