@@ -38,11 +38,19 @@ jobs:
         
         # 啟用必要的 API
         gcloud services enable run.googleapis.com cloudbuild.googleapis.com vision.googleapis.com serviceusage.googleapis.com
+        gcloud services enable iam.googleapis.com cloudresourcemanager.googleapis.com storage.googleapis.com
+        
+        # 取得服務帳戶（執行與建置）
+        PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+        SA_COMPUTE="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+        SA_BUILD="cloud-build-exec@${PROJECT_ID}.iam.gserviceaccount.com"
         
         # 使用原始碼部署，免 Dockerfile 和 Artifact Registry
         gcloud run deploy $SERVICE \
           --source . \
           --region=$REGION \
+          --service-account="$SA_COMPUTE" \
+          --build-service-account="$SA_BUILD" \
           --allow-unauthenticated \
           --min-instances=1 \
           --max-instances=3 \
