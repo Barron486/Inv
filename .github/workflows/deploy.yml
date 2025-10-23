@@ -35,18 +35,10 @@ jobs:
     - name: Build and Deploy
       run: |
         gcloud config set project $PROJECT_ID
-        gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com vision.googleapis.com
         
-        # Create repository if not exists
-        gcloud artifacts repositories create $REPO --repository-format=docker --location=$REGION --description="Invoices App" || true
-        
-        # Build and push image
-        gcloud builds submit --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE
-        
-        # Deploy to Cloud Run
+        # 使用原始碼部署，免 Dockerfile 和 Artifact Registry
         gcloud run deploy $SERVICE \
-          --image=$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE \
-          --platform=managed \
+          --source . \
           --region=$REGION \
           --allow-unauthenticated \
           --min-instances=1 \
