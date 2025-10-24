@@ -16,16 +16,16 @@ export async function POST(req: NextRequest) {
     const autoCrop = (form.get('autoCrop') ?? '1') === '1';
     const enhance = (form.get('enhance') ?? '1') === '1';
 
-    const buffers: { name: string; bytes: Buffer }[] = [];
+        const buffers: { name: string; bytes: Buffer }[] = [];
     for (const f of files) {
       const arrayBuffer = await f.arrayBuffer();
       let bytes = Buffer.from(new Uint8Array(arrayBuffer));
       if (autoCrop || enhance) {
-        bytes = await autoCropAndEnhance(bytes, { autoCrop, sharpen: enhance, normalize: enhance, threshold: true, output: 'png' });
+        const enhanced = await autoCropAndEnhance(bytes, { autoCrop, sharpen: enhance, normalize: enhance, threshold: true, output: 'png' });
+        bytes = Buffer.from(enhanced);
       }
       buffers.push({ name: f.name, bytes });
     }
-
     const results = await Promise.all(
       buffers.map(async (b) => {
         try {
