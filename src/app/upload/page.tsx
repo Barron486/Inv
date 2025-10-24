@@ -61,8 +61,30 @@ export default function UploadPage() {
       form.append('autoCrop', autoCrop ? '1' : '0');
       form.append('enhance', enhance ? '1' : '0');
       const res = await fetch('/api/ocr', { method: 'POST', body: form });
-      const data = await res.json();
-      setResults(data.results ?? []);
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        let message = res.statusText || 'Request failed';
+        if (contentType.includes('application/json')) {
+          try {
+            const errJson = await res.json();
+            message = errJson?.error || JSON.stringify(errJson);
+          } catch {}
+        } else {
+          try {
+            message = (await res.text()) || message;
+          } catch {}
+        }
+        setResults([{ fileName: 'N/A', amount: null, error: `${res.status} ${message}` }]);
+        return;
+      }
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        setResults(data.results ?? []);
+      } else {
+        // 非 JSON 回應，讀取文字並顯示
+        const text = await res.text();
+        setResults([{ fileName: 'N/A', amount: null, error: text || '非 JSON 回應' }]);
+      }
     } catch (err: any) {
       setResults([{ fileName: 'N/A', amount: null, error: String(err) }]);
     } finally {

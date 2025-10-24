@@ -14,6 +14,7 @@ export default function ReportPage() {
   const [items, setItems] = useState<ReportItem[]>([]);
   const [downloading, setDownloading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const enableSheets = process.env.NEXT_PUBLIC_ENABLE_SHEETS === '1';
 
   const total = items.reduce((acc, it) => acc + (it.amount || 0), 0);
@@ -44,8 +45,25 @@ export default function ReportPage() {
   const generatePdf = async () => {
     if (!items.length) return;
     setDownloading(true);
+    setError(null);
     try {
       const res = await fetch('/api/pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: items }) });
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        let message = res.statusText || 'Request failed';
+        if (contentType.includes('application/json')) {
+          try {
+            const errJson = await res.json();
+            message = errJson?.error || JSON.stringify(errJson);
+          } catch {}
+        } else {
+          try {
+            message = (await res.text()) || message;
+          } catch {}
+        }
+        setError(`${res.status} ${message}`);
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -61,6 +79,7 @@ export default function ReportPage() {
   const exportSheets = async () => {
     if (!items.length) return;
     setExporting(true);
+    setError(null);
     try {
       const rows = items.map((it) => [it.fileName ?? '', '', '', it.amount, '']);
       const res = await fetch('/api/sheets-export', {
@@ -68,8 +87,29 @@ export default function ReportPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rows })
       });
-      const data = await res.json();
-      alert(data?.message || '完成');
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        let message = res.statusText || 'Request failed';
+        if (contentType.includes('application/json')) {
+          try {
+            const errJson = await res.json();
+            message = errJson?.error || JSON.stringify(errJson);
+          } catch {}
+        } else {
+          try {
+            message = (await res.text()) || message;
+          } catch {}
+        }
+        setError(`${res.status} ${message}`);
+        return;
+      }
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        alert(data?.message || '完成');
+      } else {
+        const text = await res.text();
+        alert(text || '完成');
+      }
     } catch (e: any) {
       alert(String(e));
     } finally {
@@ -81,6 +121,7 @@ export default function ReportPage() {
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <h2>報告總覽</h2>
+      {error && <div style={{ color: '#b00' }}>錯誤：{error}</div>}
       <div>總金額：{total.toLocaleString('zh-TW')}</div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <label style={{ padding: '8px 12px', border: '1px dashed #aaa', borderRadius: 8, cursor: 'pointer' }}>

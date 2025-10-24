@@ -17,6 +17,7 @@ export default function SearchPage() {
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const { start, end } = getLast30DaysRange();
@@ -43,12 +44,34 @@ export default function SearchPage() {
     if (!startDate || !endDate) return;
     setLoading(true);
     setItems([]);
+    setError(null);
     const params = new URLSearchParams({ startDate, endDate });
     if (buyerId) params.set('buyerId', buyerId.trim());
     try {
       const res = await fetch(`/api/einvoices?${params.toString()}`);
-      const data = await res.json();
-      setItems(data.items ?? []);
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        let message = res.statusText || 'Request failed';
+        if (contentType.includes('application/json')) {
+          try {
+            const errJson = await res.json();
+            message = errJson?.error || JSON.stringify(errJson);
+          } catch {}
+        } else {
+          try {
+            message = (await res.text()) || message;
+          } catch {}
+        }
+        setError(`${res.status} ${message}`);
+        return;
+      }
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        setItems(data.items ?? []);
+      } else {
+        const text = await res.text();
+        setError(text || '非 JSON 回應');
+      }
     } finally {
       setLoading(false);
     }
@@ -87,7 +110,11 @@ export default function SearchPage() {
         </button>
       </div>
 
-      <div style={{ color: '#666' }}>共 {count} 筆，合計 {total.toLocaleString('zh-TW')} 元</div>
+      {error ? (
+        <div style={{ color: '#b00' }}>錯誤：{error}</div>
+      ) : (
+        <div style={{ color: '#666' }}>共 {count} 筆，合計 {total.toLocaleString('zh-TW')} 元</div>
+      )}
 
       <div style={{ display: 'grid', gap: 8 }}>
         {items.map((it, idx) => (
