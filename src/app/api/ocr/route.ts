@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { detectTextAndAmount } from '@/lib/ocr';
+import { detectTextAndAmount, isVisionConfigured } from '@/lib/ocr';
 import { autoCropAndEnhance } from '@/lib/image';
 
 export const runtime = 'nodejs';
@@ -7,6 +7,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isVisionConfigured()) {
+      return NextResponse.json({ error: 'Google Cloud Vision 未設定憑證，請設置 GOOGLE_APPLICATION_CREDENTIALS 或 GOOGLE_APPLICATION_CREDENTIALS_JSON/GOOGLE_APPLICATION_CREDENTIALS_B64。' }, { status: 500 });
+    }
     const form = await req.formData();
     const files = form.getAll('files').filter((f): f is File => f instanceof File);
     if (!files.length) {
