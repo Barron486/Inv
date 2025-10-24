@@ -47,8 +47,24 @@ export default function SearchPage() {
     if (buyerId) params.set('buyerId', buyerId.trim());
     try {
       const res = await fetch(`/api/einvoices?${params.toString()}`);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`搜尋失敗: ${res.status} ${res.statusText} - ${errorText}`);
+      }
+      
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(`伺服器返回非 JSON 響應: ${text.substring(0, 200)}...`);
+      }
+      
       const data = await res.json();
       setItems(data.items ?? []);
+    } catch (err: any) {
+      console.error('搜尋錯誤:', err);
+      alert(`搜尋失敗: ${err.message || String(err)}`);
+      setItems([]);
     } finally {
       setLoading(false);
     }

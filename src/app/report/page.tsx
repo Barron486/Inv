@@ -46,6 +46,12 @@ export default function ReportPage() {
     setDownloading(true);
     try {
       const res = await fetch('/api/pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: items }) });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`PDF 生成失敗: ${res.status} ${res.statusText} - ${errorText}`);
+      }
+      
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -53,6 +59,9 @@ export default function ReportPage() {
       a.download = 'invoices.pdf';
       a.click();
       URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('PDF 生成錯誤:', err);
+      alert(`PDF 生成失敗: ${err.message || String(err)}`);
     } finally {
       setDownloading(false);
     }
@@ -68,10 +77,23 @@ export default function ReportPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rows })
       });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Sheets 匯出失敗: ${res.status} ${res.statusText} - ${errorText}`);
+      }
+      
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(`伺服器返回非 JSON 響應: ${text.substring(0, 200)}...`);
+      }
+      
       const data = await res.json();
       alert(data?.message || '完成');
     } catch (e: any) {
-      alert(String(e));
+      console.error('Sheets 匯出錯誤:', e);
+      alert(`匯出失敗: ${e.message || String(e)}`);
     } finally {
       setExporting(false);
     }

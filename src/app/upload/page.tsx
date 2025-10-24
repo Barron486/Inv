@@ -60,11 +60,28 @@ export default function UploadPage() {
       selected.forEach((img) => form.append('files', img.file, img.file.name));
       form.append('autoCrop', autoCrop ? '1' : '0');
       form.append('enhance', enhance ? '1' : '0');
+      
       const res = await fetch('/api/ocr', { method: 'POST', body: form });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP 錯誤: ${res.status} ${res.statusText}`);
+      }
+      
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(`伺服器返回非 JSON 響應: ${text.substring(0, 200)}...`);
+      }
+      
       const data = await res.json();
       setResults(data.results ?? []);
     } catch (err: any) {
-      setResults([{ fileName: 'N/A', amount: null, error: String(err) }]);
+      console.error('OCR 提交錯誤:', err);
+      setResults([{ 
+        fileName: 'N/A', 
+        amount: null, 
+        error: err.message || String(err) 
+      }]);
     } finally {
       setSubmitting(false);
     }
